@@ -7,8 +7,8 @@ const CONFIG = {
     // Development (local)
     // API_URL: 'http://localhost:5000',
 
-    // Production (AWS)
-    API_URL: 'http://hotel-api-env.eba-3dhzikja.eu-north-1.elasticbeanstalk.com',
+    // Production (Render - HTTPS)
+    API_URL: 'https://hotel-management-api-3s92.onrender.com',
 
     // Token storage key
     TOKEN_KEY: 'hotel_auth_token',
