@@ -100,8 +100,16 @@ class HotelAPI {
         return this.get('/api/rooms');
     }
 
-    async updateRoom(roomNumber, data) {
-        return this.put(`/api/rooms/${roomNumber}`, data);
+    async createRoom(data) {
+        return this.post('/api/rooms', data);
+    }
+
+    async updateRoom(roomId, data) {
+        return this.put(`/api/rooms/${roomId}`, data);
+    }
+
+    async deleteRoom(roomId) {
+        return this.delete(`/api/rooms/${roomId}`);
     }
 
     // Reservations

@@ -101,8 +101,8 @@ async function loadRooms() {
         roomSelect.innerHTML = '<option value="">Select Room</option>';
         rooms.forEach(room => {
             roomSelect.innerHTML += `
-                <option value="${room.room_number}">
-                    ${room.name} - &#8364;${room.price}/night (${room.type})
+                <option value="${room.id}">
+                    Room ${room.room_number} - ${room.name || room.type} - &#8364;${room.price}/night
                 </option>
             `;
         });
@@ -119,6 +119,15 @@ function renderRoomCards() {
     const roomsList = document.getElementById('roomsList');
     roomsList.innerHTML = '';
 
+    if (rooms.length === 0) {
+        roomsList.innerHTML = `
+            <div class="col-12 text-center">
+                <p class="text-muted">No rooms yet. Click "Add Room" to create your first room.</p>
+            </div>
+        `;
+        return;
+    }
+
     rooms.forEach(room => {
         const col = document.createElement('div');
         col.className = 'col-md-4 col-lg-3 mb-4';
@@ -133,12 +142,17 @@ function renderRoomCards() {
                         ${room.is_occupied ? 'Occupied' : 'Available'}
                     </span>
                 </div>
-                <p class="text-muted mb-2">${room.name}</p>
+                <p class="text-muted mb-2">${room.name || 'No name'}</p>
                 <p class="mb-2"><strong>Type:</strong> ${room.type}</p>
                 <p class="mb-3"><strong>Price:</strong> &#8364;${room.price}/night</p>
-                <button class="btn btn-sm btn-outline-primary" onclick="editRoom(${room.room_number})">
-                    <i class="fas fa-edit"></i> Edit
-                </button>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-primary" onclick="editRoom(${room.id})">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteRoom(${room.id}, '${room.room_number}')" ${room.is_occupied ? 'disabled title="Cannot delete occupied room"' : ''}>
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
             </div>
         `;
         roomsList.appendChild(col);
@@ -226,6 +240,18 @@ function setupEventListeners() {
         await createReservation();
     });
 
+    // Add room form
+    document.getElementById('addRoomForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const data = {
+            room_number: document.getElementById('newRoomNumber').value,
+            name: document.getElementById('newRoomName').value,
+            type: document.getElementById('newRoomType').value,
+            price: parseFloat(document.getElementById('newRoomPrice').value)
+        };
+        await createRoom(data);
+    });
+
     // Settings form
     document.getElementById('settingsForm').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -246,7 +272,7 @@ async function createReservation() {
         guest_name: document.getElementById('guestName').value,
         guest_email: document.getElementById('guestEmail').value,
         guest_phone: document.getElementById('guestPhone').value,
-        room_number: parseInt(document.getElementById('roomSelect').value),
+        room_id: parseInt(document.getElementById('roomSelect').value),
         check_in_date: document.getElementById('checkInDate').value,
         check_out_date: document.getElementById('checkOutDate').value,
         amount_paid: parseFloat(document.getElementById('amountPaid').value),
@@ -336,20 +362,20 @@ async function deleteReservation(reservationId) {
 }
 
 // Edit room
-function editRoom(roomNumber) {
-    const room = rooms.find(r => r.room_number === roomNumber);
+function editRoom(roomId) {
+    const room = rooms.find(r => r.id === roomId);
     if (!room) return;
 
-    const newPrice = prompt(`Edit price for ${room.name}:`, room.price);
+    const newPrice = prompt(`Edit price for ${room.name || 'Room ' + room.room_number}:`, room.price);
     if (newPrice !== null && !isNaN(newPrice)) {
-        updateRoom(roomNumber, { price: parseFloat(newPrice) });
+        updateRoom(roomId, { price: parseFloat(newPrice) });
     }
 }
 
 // Update room
-async function updateRoom(roomNumber, data) {
+async function updateRoom(roomId, data) {
     try {
-        const result = await api.updateRoom(roomNumber, data);
+        const result = await api.updateRoom(roomId, data);
 
         if (result.success) {
             showAlert('Room updated successfully!', 'success');
@@ -359,6 +385,51 @@ async function updateRoom(roomNumber, data) {
         }
     } catch (error) {
         console.error('Error updating room:', error);
+        showAlert('An error occurred', 'danger');
+    }
+}
+
+// Create new room
+async function createRoom(data) {
+    try {
+        const result = await api.createRoom(data);
+
+        if (result.success) {
+            showAlert('Room created successfully!', 'success');
+            await loadRooms();
+            await refreshDashboard();
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addRoomModal'));
+            if (modal) modal.hide();
+            // Reset form
+            document.getElementById('addRoomForm').reset();
+        } else {
+            showAlert(result.message || 'Failed to create room', 'danger');
+        }
+    } catch (error) {
+        console.error('Error creating room:', error);
+        showAlert('An error occurred', 'danger');
+    }
+}
+
+// Delete room
+async function deleteRoom(roomId, roomNumber) {
+    if (!confirm(`Are you sure you want to delete Room ${roomNumber}?`)) {
+        return;
+    }
+
+    try {
+        const result = await api.deleteRoom(roomId);
+
+        if (result.success) {
+            showAlert('Room deleted successfully!', 'success');
+            await loadRooms();
+            await refreshDashboard();
+        } else {
+            showAlert(result.message || 'Failed to delete room', 'danger');
+        }
+    } catch (error) {
+        console.error('Error deleting room:', error);
         showAlert('An error occurred', 'danger');
     }
 }

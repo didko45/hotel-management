@@ -200,7 +200,12 @@
             <!-- Rooms Tab -->
             <div class="tab-pane fade" id="rooms">
                 <div class="container-fluid">
-                    <h4 class="mb-4"><i class="fas fa-door-open me-2"></i>Room Management</h4>
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="mb-0"><i class="fas fa-door-open me-2"></i>Room Management</h4>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRoomModal">
+                            <i class="fas fa-plus me-2"></i>Add Room
+                        </button>
+                    </div>
                     <div class="row" id="roomsList">
                         <div class="col-12 text-center">
                             <div class="spinner-container">
@@ -354,6 +359,52 @@
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save me-2"></i>Create Reservation
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Room Modal -->
+    <div class="modal fade" id="addRoomModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-plus-circle me-2"></i>Add New Room
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addRoomForm">
+                        <div class="mb-3">
+                            <label class="form-label">Room Number *</label>
+                            <input type="text" class="form-control" id="newRoomNumber" placeholder="e.g. 101, 202, A1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Room Name</label>
+                            <input type="text" class="form-control" id="newRoomName" placeholder="e.g. Deluxe Suite">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Room Type</label>
+                            <select class="form-control" id="newRoomType">
+                                <option value="Standard">Standard</option>
+                                <option value="Deluxe">Deluxe</option>
+                                <option value="Suite">Suite</option>
+                                <option value="Single">Single</option>
+                                <option value="Double">Double</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Price per Night (&#8364;) *</label>
+                            <input type="number" class="form-control" id="newRoomPrice" min="0" step="0.01" required>
+                        </div>
+                        <div class="text-end">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Add Room
                             </button>
                         </div>
                     </form>
