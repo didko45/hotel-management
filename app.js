@@ -264,6 +264,19 @@ function setupEventListeners() {
         checkIn.setDate(checkIn.getDate() + 1);
         document.getElementById('checkOutDate').min = checkIn.toISOString().split('T')[0];
     });
+
+    // Edit reservation form
+    document.getElementById('editReservationForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await saveReservation();
+    });
+
+    // Update edit checkout date min when edit checkin changes
+    document.getElementById('editCheckInDate').addEventListener('change', (e) => {
+        const checkIn = new Date(e.target.value);
+        checkIn.setDate(checkIn.getDate() + 1);
+        document.getElementById('editCheckOutDate').min = checkIn.toISOString().split('T')[0];
+    });
 }
 
 // Create reservation
@@ -434,9 +447,73 @@ async function deleteRoom(roomId, roomNumber) {
     }
 }
 
-// Edit reservation (placeholder)
+// Edit reservation
 function editReservation(reservationId) {
-    showAlert('Edit functionality - coming soon!', 'info');
+    const reservation = reservations.find(r => r.id === reservationId);
+    if (!reservation) {
+        showAlert('Reservation not found', 'danger');
+        return;
+    }
+
+    // Populate edit room select dropdown
+    const editRoomSelect = document.getElementById('editRoomSelect');
+    editRoomSelect.innerHTML = '<option value="">Select Room</option>';
+    rooms.forEach(room => {
+        editRoomSelect.innerHTML += `
+            <option value="${room.id}" ${room.id === reservation.room_id ? 'selected' : ''}>
+                Room ${room.room_number} - ${room.name || room.type} - &#8364;${room.price}/night
+            </option>
+        `;
+    });
+
+    // Fill form with reservation data
+    document.getElementById('editReservationId').value = reservation.id;
+    document.getElementById('editGuestName').value = reservation.guest_name;
+    document.getElementById('editGuestEmail').value = reservation.guest_email || '';
+    document.getElementById('editGuestPhone').value = reservation.guest_phone || '';
+    document.getElementById('editCheckInDate').value = reservation.check_in_date;
+    document.getElementById('editCheckOutDate').value = reservation.check_out_date;
+    document.getElementById('editAmountPaid').value = reservation.amount_paid;
+    document.getElementById('editPaymentStatus').value = reservation.payment_status;
+    document.getElementById('editReservationNotes').value = reservation.notes || '';
+
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('editReservationModal'));
+    modal.show();
+}
+
+// Save edited reservation
+async function saveReservation() {
+    const reservationId = parseInt(document.getElementById('editReservationId').value);
+
+    const data = {
+        guest_name: document.getElementById('editGuestName').value,
+        guest_email: document.getElementById('editGuestEmail').value,
+        guest_phone: document.getElementById('editGuestPhone').value,
+        room_id: parseInt(document.getElementById('editRoomSelect').value),
+        check_in_date: document.getElementById('editCheckInDate').value,
+        check_out_date: document.getElementById('editCheckOutDate').value,
+        amount_paid: parseFloat(document.getElementById('editAmountPaid').value),
+        payment_status: document.getElementById('editPaymentStatus').value,
+        notes: document.getElementById('editReservationNotes').value
+    };
+
+    try {
+        const result = await api.updateReservation(reservationId, data);
+
+        if (result.success) {
+            bootstrap.Modal.getInstance(document.getElementById('editReservationModal')).hide();
+            showAlert('Reservation updated successfully!', 'success');
+            await refreshDashboard();
+            await loadReservations();
+            await loadRooms();
+        } else {
+            showAlert(result.message || 'Failed to update reservation', 'danger');
+        }
+    } catch (error) {
+        console.error('Error updating reservation:', error);
+        showAlert('An error occurred', 'danger');
+    }
 }
 
 // Load settings
